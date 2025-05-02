@@ -85,13 +85,15 @@ const TodoItem = (props) => {
      const endReversed = endTime.slice(6,10) + "-" + endTime.slice(3,5) + "-"+ (endTime.slice(0,2))
         let start = startTime.slice(0,10)
         let end = endTime.slice(0,10)
-        
-        const url = "https://track-pro-backend-fastapi.onrender.com/tasks"
+
+        const token = localStorage.getItem('authToken');
+        const url = "http://127.0.0.1:8000/tasks"
             const options = {
                 method: 'PUT',
                 headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
                 },
                 body: `{
                     "title" : "${taskName}",
@@ -110,13 +112,15 @@ const TodoItem = (props) => {
 
     //function that deleted the todo
     const deleteTodoBtnClicked = async()=>{
-
-        const url = `https://track-pro-backend-fastapi.onrender.com/tasks/${id}`
+        
+        const token = localStorage.getItem('authToken');
+        const url = `http://127.0.0.1:8000/tasks/${id}`
         const options = {
             method: 'DELETE',
             headers: {
             'Accept': 'application/json',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
             },
         }
         const response = await fetch(url, options)

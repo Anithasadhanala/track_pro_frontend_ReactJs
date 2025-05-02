@@ -19,13 +19,14 @@ const  ProjectItem = (props) => {
 
     //function that deletes a project with its ID
     const deleteProjectBtnClicked = async() =>{
-
-        const url = `https://track-pro-backend-fastapi.onrender.com/projects/${id}`
+        const token = localStorage.getItem('authToken');
+        const url = `http://127.0.0.1:8000/projects/${id}`
             const options = {
                 method: 'DELETE',
                 headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
                 },
             }
             const response = await fetch(url, options)

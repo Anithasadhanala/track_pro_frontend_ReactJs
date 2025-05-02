@@ -12,7 +12,7 @@ const TaskStatus = (props) => {
     const [errEmptyData,setterErrorEmptyData] = useState(false)
 
     //destructing the props
-    const {details,todoTasks,projectSelected,newtodoAddedRerender,deletedTodoTaskRerender} = props
+    const {details,todoTasks,projectSelected,newtodoAddedRerender,deletedTodoTaskRerender, todoLoading} = props
     const {name,color,bgColor,namedb} = details
 
     //changing styles according to props received
@@ -46,19 +46,20 @@ const TaskStatus = (props) => {
     const todoTaskAddClicked =async () =>{
 
         if(taskName!=='' && startTime!=='' && endTime!==''){
-            const url = "https://track-pro-backend-fastapi.onrender.com/tasks"
+            const token = localStorage.getItem('authToken');
+            const url = `http://127.0.0.1:8000/projects/${projectSelected}/tasks`
             const options = {
                 method: 'POST',
                 headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
                 },
                 body: `{
                     "title" : "${taskName}",
                     "start_date" : "${startTime}",
                     "end_date" : "${endTime}",
-                    "status" : "${namedb}",
-                    "project_id" : "${projectSelected}"
+                    "status" : "${namedb}"
                 }`,
             }
             const response = await fetch(url, options)
@@ -149,6 +150,8 @@ const TaskStatus = (props) => {
        )
     }
     return(
+
+        
             <li className="flex flex-col bg-gray-100 p-5">
                 <h1 className={status} >&bull; {name}</h1>
                 <ul>

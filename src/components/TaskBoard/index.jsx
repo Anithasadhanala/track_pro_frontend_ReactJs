@@ -5,6 +5,8 @@ import { RxCross1 } from "react-icons/rx";
 import { IoIosSearch } from "react-icons/io";
 import ProjectItem from "../ProjectItem"
 import TaskStatus from "../TaskStatus"
+import ClipLoader from "react-spinners/ClipLoader";
+import { getAuth, signOut } from "firebase/auth";
 
 
 // todo status details, add more if necessary!!
@@ -18,12 +20,34 @@ const todoStatusItems = [
 class TaskBoard extends Component {
 
     // state object that holds the initial values
-    state = {projectsItems: [],projectSelected:'',todoTasksList:[],newProject: '',
-    errProjectPara: false,currentProject:"",search:'',showModal:false}
+    state = {projectsItems: [],projectSelected:'',todoTasksList:[],newProject: '', todoLoading: true,
+    errProjectPara: false,currentProject:"",search:'',showModal:false, loading: true}
 
 
     //Build in function that calls the below function as the page loads
-    componentDidMount = () =>  this.projectItemsFunctionAPI()
+    componentDidMount = () => {
+        this.projectItemsFunctionAPI()
+        const notificationPermission = localStorage.getItem('pushNotificationPermission');
+
+        if (!notificationPermission) {
+          this.showNotification("Can this website send you notifications?", "info");
+        }
+    } 
+
+    // Function to show the notification
+    showNotification(message) {
+        const notification = window.confirm(message);
+
+        // If the user accepts, store their response in localStorage
+        if (notification) {
+            localStorage.setItem('pushNotificationPermission', true);
+            const { user, token } = this.props;
+            console.log('User allowed notifications');
+        } else {
+            localStorage.setItem('pushNotificationPermission', false);
+            console.log('User denied notifications');
+        }
+    }
     
     //function that triggers when a project is opted from the list
     onSuccessProjectSelectedTodos = (data,projectId)=>{
@@ -33,24 +57,41 @@ class TaskBoard extends Component {
 
 
     //function that get all todo tasks details from TODO table with a given projectId
-    projectSelectedItemsAPI = async(projectId) =>{
-       
-        if(projectId!=='' && projectId!==undefined){
-            const url = `https://track-pro-backend-fastapi.onrender.com/projects/${projectId}/tasks`
-            const options = {
-            method: 'GET'
-            }
-            const response = await fetch(url, options)
-            const data = await response.json()
-    
+    projectSelectedItemsAPI = async (projectId) => {
+        this.setState({ todoLoading: true });
+      
+        if (projectId !== '' && projectId !== undefined) {
+          const token = localStorage.getItem('authToken');
+          const url = `http://127.0.0.1:8000/projects/${projectId}/tasks`;
+          const options = {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+                },
+          };
+      
+          try {
+            const response = await fetch(url, options);
+            const data = await response.json();
+      
             if (response.ok) {
-
-            this.onSuccessProjectSelectedTodos(data,projectId)
+              this.onSuccessProjectSelectedTodos(data, projectId);
             } else {
-            this.onFailureProjectSelectedTodos()
+              this.onFailureProjectSelectedTodos();
             }
+          } catch (error) {
+            console.error('API Error:', error);
+            this.onFailureProjectSelectedTodos();
+          } finally {
+            this.setState({ todoLoading: false }); // Stop loading
+          }
+        } else {
+          this.setState({ todoLoading: false }); // Also stop loading if projectId is invalid
         }
-    }
+      };
+      
 
     //function triggers when fetching projects details from table is successfull
     onSuccessGetProjectsItemsApi = (data) => {
@@ -63,19 +104,39 @@ class TaskBoard extends Component {
         else this.setState({projectsItems:[],currentProject:''})
     }
 
+    onFailureGetProjectsItemsApi = () => {
+
+    }
+
 
     //function that gets all the project details from the PROJECTS table
     projectItemsFunctionAPI =async () =>{
-        
-        const url = "https://track-pro-backend-fastapi.onrender.com/projects"
+        this.setState({ loading: true }) // set loading before API call
+        const token = localStorage.getItem('authToken');
+        console.log(token,")))))))))))))))))")
+        const url = "http://127.0.0.1:8000/projects"
         const options = {
-          method: 'GET'
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+            },
         }
-        const response = await fetch(url, options)
-        const data = await response.json()
-        
-        if (response.ok)  this.onSuccessGetProjectsItemsApi(data)
-        else this.onFailureGetProjectsItemsApi()
+        try {
+            const response = await fetch(url, options);
+            const data = await response.json();
+
+            if (response.ok) {
+            this.onSuccessGetProjectsItemsApi(data);
+            } else {
+            this.onFailureGetProjectsItemsApi();
+            }
+        } catch (error) {
+            console.error("Error fetching projects:", error);
+        } finally {
+            this.setState({ loading: false }); // done loading
+        }
     }
 
     //function triggers when a new project opted
@@ -151,12 +212,14 @@ class TaskBoard extends Component {
         const {newProject} = this.state
     
         if(newProject!==''){
-            const url = "https://track-pro-backend-fastapi.onrender.com/projects"
+            const token = localStorage.getItem('authToken');
+            const url = "http://127.0.0.1:8000/projects"
             const options = {
                 method: 'POST',
                 headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
                 },
                 body: `{
                     "title" : "${newProject}"
@@ -171,8 +234,15 @@ class TaskBoard extends Component {
         else this.setState({errProjectPara: true})
     }
 
-    searchBtnClicked = () =>{
-        //to be implemented
+    logoutBtnClicked = () =>{
+        const auth = getAuth();
+        signOut(auth)
+        .then(() => {
+            console.log("User signed out successfully.");
+        })
+        .catch((error) => {
+            console.error("Error signing out:", error);
+        });
     }
 
     
@@ -192,38 +262,51 @@ class TaskBoard extends Component {
     newtodoAddedRerender = (projectId)=> this.projectSelectedItemsAPI(projectId)
 
     render(){
-        const {projectsItems,todoTasksList,projectSelected,currentProject,search} = this.state
+        const {projectsItems,todoTasksList,projectSelected,currentProject,search,loading, todoLoading} = this.state
         return(
-            <div className="grid  h-screen w-screen grid-cols-6 grid-flow-row gap-0.5 bg-slate-200 ">
+            <div className="grid  h-screen w-screen grid-cols-6 grid-flow-row gap-0.5 bg-slate-200  ">
                 <div className=" bg-gray-100  col-span-1  flex justify-start items-center gap-x-2 pl-4 p-6">
                     <img src="./logo.png" alt="logo" className="h-6"/>
                     <h2 className="font-sans font-medium flex  max-md:hidden">Task boards</h2>
                 </div>
                 <div className="  bg-gray-100 col-span-5 pl-8 flex items-center font-sans font-medium justify-around">
-                    <h1 className=" flex  max-md:hidden ">My Projects / {currentProject}</h1>
-                    <div className="flex bg-gray-300 rounded-md pr-3">
-                    <input type="search" className=" border-2  text-sm p-2 rounded-md rounded-r-none" placeholder="Search" onChange={this.searchChanged} />
-                    <button type="button" onClick={this.searchBtnClicked} className="p-0"><IoIosSearch className=" size-5 ml-1 mt-0 pt-0 " /></button>
+                    <h1 className=" flex  max-md:hidden ">My Projects / <span className="text-blue-500 ml-2">{currentProject}</span></h1>
+                    <div className="flex bg-gray-300 rounded-md p-2 color-red">
+                    <button type="button p-2" onClick={this.logoutBtnClicked} className="text-red-500">Logout</button>
                 </div>
                 </div>
-                    <div className="bg-gray-100 col-span-1 row-span-12 min-md:flex  max-md:hidden  ">
-                        <ul className="grid gap-y-3 w-100 p-2 pl-4 pt-6 pb-6">
-                            
-                            {projectsItems.lenth===0 ? '' : projectsItems.map(each=>(
-                             <ProjectItem key={each.project_id} details={each} projectClicked={this.projectClicked} 
-                             applyStylingProject={projectSelected} projectDeletedRerender={this.projectDeletedRerender}
-                             />))}
-                        </ul>
+                    <div className="bg-gray-100 col-span-1 row-span-12 min-md:flex  max-md:hidden">
+                   
+                        {loading ? 
+                            <div className="grid gap-y-3 w-100 p-2 pl-4 pt-6 pb-6 justify-center">
+                                <ClipLoader
+                                    color="#14aee8"
+                                    size={20}
+                                    />  
+                            </div> : 
+                            <ul className="grid gap-y-3 w-100 p-2 pl-4 pt-6 pb-6">                         
+                                {projectsItems.lenth===0 ? '' : projectsItems.map(each=>(
+                                <ProjectItem key={each.project_id} details={each} projectClicked={this.projectClicked} 
+                                applyStylingProject={projectSelected} projectDeletedRerender={this.projectDeletedRerender}
+                                />))}
+                            </ul> 
+                        }
                         <hr/>
                     <div>
                         {this.reactPopUpNewProject()}
                 </div>
                 </div>
-                <ul className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 bg-gray-200 col-span-5 max-md:col-span-6  row-span-12 gap-x-0.5 overflow-x-auto">
-                    {todoStatusItems.map(each=>(<TaskStatus key={each.id} details={each} todoTasks={todoTasksList} 
-                    projectSelected={projectSelected} newtodoAddedRerender={this.newtodoAddedRerender} 
-                    deletedTodoTaskRerender={this.deletedTodoTaskRerender} searchTodo={search}/>))}
-                </ul>
+                <div  className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 bg-gray-200 col-span-5 max-md:col-span-6  row-span-12 gap-x-0.5 overflow-x-auto justify-center">
+                    {todoLoading ? <ClipLoader
+                                    color="#14aee8"
+                                    size={20}
+                                    />  :   <ul className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 bg-gray-200 col-span-5 max-md:col-span-6  row-span-12 gap-x-0.5 overflow-x-auto">
+                                    {todoStatusItems.map(each=>(<TaskStatus key={each.id} details={each} todoTasks={todoTasksList} todoLoading={todoLoading}
+                                    projectSelected={projectSelected} newtodoAddedRerender={this.newtodoAddedRerender} 
+                                    deletedTodoTaskRerender={this.deletedTodoTaskRerender} searchTodo={search}/>))}
+                                </ul>}
+                </div>
+              
             </div>
         )
     }
