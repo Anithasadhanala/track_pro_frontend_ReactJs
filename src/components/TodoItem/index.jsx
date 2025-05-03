@@ -35,7 +35,7 @@ const TodoItem = (props) => {
     
 
     //destructing the props here
-    const {details,editedTodoRerender,deletedTodoRerender}= props
+    const {details,editedTodoRerender,deletedTodoRerender, projectSelected}= props
     const {title,start_date,end_date,status,id} = details    
 
     let start = start_date
@@ -87,7 +87,7 @@ const TodoItem = (props) => {
         let end = endTime.slice(0,10)
 
         const token = localStorage.getItem('authToken');
-        const url = "http://127.0.0.1:8000/tasks"
+        const url = `http://127.0.0.1:8000/projects/${projectSelected}/tasks/${id}`
             const options = {
                 method: 'PUT',
                 headers: {
@@ -99,8 +99,7 @@ const TodoItem = (props) => {
                     "title" : "${taskName}",
                     "start_date" : "${startReversed}",
                     "end_date" : "${endReversed}",
-                    "status" : "${statusName}",
-                    "id" : "${id}"
+                    "status" : "${statusName}"
                 }`,
             }
             const response = await fetch(url, options)
@@ -114,7 +113,7 @@ const TodoItem = (props) => {
     const deleteTodoBtnClicked = async()=>{
         
         const token = localStorage.getItem('authToken');
-        const url = `http://127.0.0.1:8000/tasks/${id}`
+        const url = `http://127.0.0.1:8000/projects/${projectSelected}/tasks/${id}`
         const options = {
             method: 'DELETE',
             headers: {

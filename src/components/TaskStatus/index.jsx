@@ -155,7 +155,7 @@ const TaskStatus = (props) => {
             <li className="flex flex-col bg-gray-100 p-5">
                 <h1 className={status} >&bull; {name}</h1>
                 <ul>
-                {todoListFiltered.length!==0 ? (todoListFiltered.map(each=>(<TodoItem details={each} key={each.id} 
+                {todoListFiltered.length!==0 ? (todoListFiltered.map(each=>(<TodoItem details={each} key={each.id}  projectSelected={projectSelected}
                 editedTodoRerender={editedTodoRerender} deletedTodoRerender={deletedTodoRerender}/>))) : ""}
                 </ul>
                 {reactPopUpNewTodoTask()}

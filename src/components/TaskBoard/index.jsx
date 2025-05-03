@@ -51,7 +51,7 @@ class TaskBoard extends Component {
     
     //function that triggers when a project is opted from the list
     onSuccessProjectSelectedTodos = (data,projectId)=>{
-        if(data.length!==0) this.setState({todoTasksList: data,projectSelected: data[0].id});
+        if(data.length!==0) this.setState({todoTasksList: data,projectSelected: projectId});
         else this.setState({todoTasksList: data,projectSelected: projectId});
     }
 

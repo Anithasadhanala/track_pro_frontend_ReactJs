@@ -1,6 +1,31 @@
 import React from "react";
 import { signInWithGoogle, signInWithGitHub } from "../../integrations/firebase/auth";
 
+  // Function to save user to backend
+  const saveUserToBackend = async (user, token) => {
+    const obj = JSON.stringify({
+      email: user.email,
+      full_name: user.displayName,
+      oauth_provider: user.providerData[0]?.providerId,
+      oauth_id: user.uid,
+      fcm_token: token,
+      })
+    try {
+        await fetch('http://127.0.0.1:8000/users', {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+              },
+            body: obj,
+        });
+        console.log('User saved to backend');
+    } catch (error) {
+        console.error('Error saving user to backend:', error);
+    }
+};
+
 const Login = () => {
   const loginWithGoogle = async () => {
     const result = await signInWithGoogle();
@@ -19,32 +44,6 @@ const Login = () => {
       saveUserToBackend(user, token)
       }
   };
-
-
-
-  // Function to save user to backend
-  const saveUserToBackend = async (user, token) => {
-    try {
-        await fetch('http://127.0.0.1:8000/users', {
-            method: 'POST',
-            headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-              },
-            body: JSON.stringify({
-            email: user.email,
-            full_name: user.displayName,
-            oauth_provider: user.providerData[0]?.providerId,
-            oauth_id: user.uid,
-            fcm_token: token,
-            }),
-        });
-        console.log('User saved to backend');
-    } catch (error) {
-        console.error('Error saving user to backend:', error);
-    }
-};
 
 
   return (
