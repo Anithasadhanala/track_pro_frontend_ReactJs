@@ -8,7 +8,6 @@ import { firebaseApp } from "./integrations/firebase/initialize";
 
 function App() {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
   const auth = getAuth(firebaseApp);
 
   useEffect(() => {
@@ -16,11 +15,8 @@ function App() {
     const unsubscribe = onAuthStateChanged(auth, async(authUser) => {
       if (authUser) {
         setUser(authUser);
-        const idToken = await authUser.getIdToken();
-        setToken(idToken);
       } else {
         setUser(null);
-        setToken(null);
       }
     });
 
@@ -31,7 +27,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={user ? <Navigate to="/taskboard" replace /> : <Login />} />
-        <Route path="/taskboard" element={user ? <TaskBoard user={user} token={token} /> : <Navigate to="/" />} />
+        <Route path="/taskboard" element={user ? <TaskBoard /> : <Navigate to="/" />} />
       </Routes>
     </Router>
   );

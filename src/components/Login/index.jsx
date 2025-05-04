@@ -2,13 +2,13 @@ import React from "react";
 import { signInWithGoogle, signInWithGitHub } from "../../integrations/firebase/auth";
 
   // Function to save user to backend
-  const saveUserToBackend = async (user, token) => {
+  const saveUserToBackend = async (user,token) => {
     const obj = JSON.stringify({
       email: user.email,
       full_name: user.displayName,
       oauth_provider: user.providerData[0]?.providerId,
       oauth_id: user.uid,
-      fcm_token: token,
+      fcm_token: '',
       })
     try {
         await fetch('http://127.0.0.1:8000/users', {
@@ -32,7 +32,7 @@ const Login = () => {
     if (result) {
       const { user, token } = result;
       localStorage.setItem('authToken', token)
-      saveUserToBackend(user, token)
+      saveUserToBackend(user,token)
     }
   };
 
@@ -41,7 +41,7 @@ const Login = () => {
     if (result) {
       const { user, token } = result;
       localStorage.setItem('authToken', token);
-      saveUserToBackend(user, token)
+      saveUserToBackend(user,token)
       }
   };
 

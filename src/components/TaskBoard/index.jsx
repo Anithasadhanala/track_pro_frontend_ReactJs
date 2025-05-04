@@ -2,11 +2,11 @@ import {Component} from "react"
 import { v4 as uuidv4 } from 'uuid';
 import Popup from 'reactjs-popup'
 import { RxCross1 } from "react-icons/rx";
-import { IoIosSearch } from "react-icons/io";
 import ProjectItem from "../ProjectItem"
 import TaskStatus from "../TaskStatus"
 import ClipLoader from "react-spinners/ClipLoader";
 import { getAuth, signOut } from "firebase/auth";
+import {handlePermissionGrantedForFcmToken} from "../../integrations/firebase/fcm_token_generation"
 
 
 // todo status details, add more if necessary!!
@@ -29,19 +29,20 @@ class TaskBoard extends Component {
         this.projectItemsFunctionAPI()
         const notificationPermission = localStorage.getItem('pushNotificationPermission');
 
-        if (!notificationPermission) {
+        if (!notificationPermission) {  
           this.showNotification("Can this website send you notifications?", "info");
         }
-    } 
+    }
 
     // Function to show the notification
     showNotification(message) {
+      
         const notification = window.confirm(message);
 
         // If the user accepts, store their response in localStorage
         if (notification) {
             localStorage.setItem('pushNotificationPermission', true);
-            const { user, token } = this.props;
+            handlePermissionGrantedForFcmToken();
             console.log('User allowed notifications');
         } else {
             localStorage.setItem('pushNotificationPermission', false);
@@ -85,10 +86,10 @@ class TaskBoard extends Component {
             console.error('API Error:', error);
             this.onFailureProjectSelectedTodos();
           } finally {
-            this.setState({ todoLoading: false }); // Stop loading
+            this.setState({ todoLoading: false });
           }
         } else {
-          this.setState({ todoLoading: false }); // Also stop loading if projectId is invalid
+          this.setState({ todoLoading: false });
         }
       };
       
